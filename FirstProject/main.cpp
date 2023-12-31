@@ -6,17 +6,20 @@
 const char* vertexShaderSource =
 "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"out vec4 vertexColor;\n"
 "\n"
 "void main(){\n"
 "  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"  vertexColor = vec4(0.5,0,0,1);\n"
 "}\0";
 
 const char* fragmentShaderSource =
 "#version 330 core\n"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;\n"
 "\n"
 "void main() {\n"
-"  FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n"
+"  FragColor = ourColor;\n"
 "}\0";
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
@@ -140,6 +143,13 @@ int main() {
 
 		// end of this VAO
 		glBindVertexArray(NULL);
+
+		// update uniform
+		float timeValue = glfwGetTime(); // in seconds
+		float greenValue = (sin(timeValue) * 0.5) + 0.5;
+		int uniformLocation = glGetUniformLocation(shaderProgram, "ourColor");
+		glUseProgram(shaderProgram);
+		glUniform4f(uniformLocation, 0, greenValue, 0, 1);
 
 		// draw
 		glBindVertexArray(VAO);
