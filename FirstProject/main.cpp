@@ -1,3 +1,8 @@
+// chapter 5 exercise: craete two triangle use two fragment shader with different color
+//
+// Solution:
+//   needs two shader program, but because vertex attributes are the same, we should be able to use the same VAO
+
 // include order matters
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,12 +16,20 @@ const char* vertexShaderSource =
 "  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 "}\0";
 
-const char* fragmentShaderSource =
+const char* fragmentShaderSource1 =
 "#version 330 core\n"
 "out vec4 FragColor;\n"
 "\n"
 "void main() {\n"
 "  FragColor = vec4(1.0, 0.5, 0.2, 1.0);\n"
+"}\0";
+
+const char* fragmentShaderSource2 =
+"#version 330 core\n"
+"out vec4 FragColor;\n"
+"\n"
+"void main() {\n"
+"  FragColor = vec4(0.3, 1.0, 0.3, 1.0);\n"
 "}\0";
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
@@ -26,6 +39,33 @@ void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
+	}
+}
+
+void compileShader(unsigned int shader, const char* shaderSource) {
+	int success;
+	char infoLog[512];
+
+	glShaderSource(shader, 1, &shaderSource, NULL);
+	glCompileShader(shader);
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(shader, 512, NULL, infoLog);
+		std::cout << "shader compiling failed\n" << infoLog << std::endl;
+	}
+}
+
+void linkShaderProgram(int program, int vertexShader, int fragmentShader) {
+	int success;
+	char infoLog[512];
+
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
+	glLinkProgram(program);
+	glGetProgramiv(program, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(program, 512, NULL, infoLog);
+		std::cout << "shader program linking failed\n" << infoLog << std::endl;
 	}
 }
 
@@ -56,41 +96,23 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// compile shader
-	int success;
-	char infoLog[512];
-
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "vertex shader compiling failed\n" << infoLog << std::endl;
-	}
-
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		std::cout << "fragment shader compiling failed\n" << infoLog << std::endl;
-	}
+	compileShader(vertexShader, vertexShaderSource);
+	unsigned int fragmentShader1 = glCreateShader(GL_FRAGMENT_SHADER);
+	compileShader(fragmentShader1, fragmentShaderSource1);
+	unsigned int fragmentShader2 = glCreateShader(GL_FRAGMENT_SHADER);
+	compileShader(fragmentShader2, fragmentShaderSource2);
 
 	// shader program
-	unsigned int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "shader program linking failed\n" << infoLog << std::endl;
-	}
+	unsigned int shaderProgram1 = glCreateProgram();
+	linkShaderProgram(shaderProgram1, vertexShader, fragmentShader1);
+	unsigned int shaderProgram2 = glCreateProgram();
+	linkShaderProgram(shaderProgram2, vertexShader, fragmentShader2);
 
 	// clean up shaders
 	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	glDeleteShader(fragmentShader1);
+	glDeleteShader(fragmentShader2);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -138,10 +160,11 @@ int main() {
 		glBindVertexArray(NULL);
 
 		// draw
-		glUseProgram(shaderProgram);
 		glBindVertexArray(VAO);
-		// glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glUseProgram(shaderProgram1);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+		glUseProgram(shaderProgram2);
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)(3*sizeof(unsigned int)));
 
 		// swap
 		glfwSwapBuffers(window);
