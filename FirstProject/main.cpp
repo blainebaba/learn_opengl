@@ -1,3 +1,5 @@
+// exercise: use up and down key to control mix of two textures
+
 // include order matters
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -7,6 +9,8 @@
 #include "stb_image.h"
 #include "shader.h"
 
+float smileLevel = 0;
+
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
 	glViewport(0, 0, w, h);
 }
@@ -15,6 +19,13 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS && smileLevel < 1) {
+		smileLevel += 0.005;
+	}
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS && smileLevel > 0) {
+		smileLevel -= 0.005;
+	}
+	
 }
 
 int textureUnit = 0;
@@ -24,6 +35,9 @@ int loadTexture(const char* imagePath, Shader* shader, int& textureId) {
 	glGenTextures(1, &texture);
 	// bind object, set target for following operation
 	glBindTexture(GL_TEXTURE_2D, texture);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	int width, height, nChannel;
 	stbi_set_flip_vertically_on_load(true);
@@ -90,8 +104,8 @@ int main() {
 	glBindTexture(GL_TEXTURE_2D, texture1);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, texture2);
-	shader.setInt("texture1", 0);
-	shader.setInt("texture2", 1);
+	shader.setInt("container", 0);
+	shader.setInt("awesomeface", 1);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -148,6 +162,7 @@ int main() {
 
 		// draw
 		glBindVertexArray(VAO);
+		shader.setFloat("smileLevel", smileLevel);
 		shader.use();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
