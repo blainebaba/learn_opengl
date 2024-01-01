@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
@@ -13,6 +15,42 @@ void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+}
+
+int textureUnit = 0;
+
+int loadTexture(const char* imagePath, Shader* shader, int& textureId) {
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	// bind object, set target for following operation
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	int width, height, nChannel;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(imagePath, &width, &height, &nChannel, 0);
+
+	if (data) {
+		if (nChannel == 4) {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+		else if (nChannel == 3) {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		}
+		else {
+			std::cout << "unknown image format" << std::endl;
+			return -1;
+		}
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(data);
+	}
+	else {
+		std::cout << "fail to load image" << std::endl;
+		return -1;
+	}
+
+	textureId = texture;
+
+	return 0;
 }
 
 int main() {
@@ -42,7 +80,18 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	// shader
-	Shader shader = Shader("shaders/vertex.glsh", "shaders/fragment.glsh");
+	Shader shader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+
+	// load texture
+	int texture1, texture2;
+	loadTexture("container.jpg", &shader, texture1);
+	loadTexture("awesomeface.png", &shader, texture2);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	shader.setInt("texture1", 0);
+	shader.setInt("texture2", 1);
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -54,13 +103,15 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		float vertices[] = {
-			// location  // color
-			0,0.5,0,     1,0,0, 
-			-0.5,-0.5,0, 0,1,0,
-			0.5,-0.5,0,  0,0,1,
+			// location  // color // texture coords
+			-1,1,0,		1,0,0,      0,1,
+			1,1,0,		0,1,0,      1,1,
+			-1,-1,0,	0,0,1,		0,0,
+			1,-1,0,		1,1,0,		1,0,
 		};
 		unsigned int elements[] = {
-			0, 1, 2
+			0, 2, 1,
+			1, 2, 3,
 		};
 
 		// VAO: vertex array object, stores vertex config, including VBO
@@ -83,11 +134,14 @@ int main() {
 
 		// link vertex attributes
 		// position attribute
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 		glEnableVertexAttribArray(0);
 		// color attribute
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
 		glEnableVertexAttribArray(1);
+		// texture coord attribute
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
+		glEnableVertexAttribArray(2);
 
 		// end of this VAO
 		glBindVertexArray(NULL);
