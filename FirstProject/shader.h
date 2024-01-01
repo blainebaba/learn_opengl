@@ -21,6 +21,7 @@ public:
 	void setBool(const std::string &name, bool value);
 	void setInt(const std::string& name, int value);
 	void setFloat(const std::string& name, float value);
+	void setMat4(const std::string& name, float* value);
 };
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
@@ -110,5 +111,11 @@ void Shader::setFloat(const std::string& name, float value) {
 	int location = glGetUniformLocation(ID, name.c_str());
 	glUseProgram(ID);
 	glUniform1f(location, value);
+}
+
+void Shader::setMat4(const std::string& name, float* values) {
+	int location = glGetUniformLocation(ID, name.c_str());
+	glUseProgram(ID);
+	glUniformMatrix4fv(location, 1, GL_FALSE, values);
 }
 

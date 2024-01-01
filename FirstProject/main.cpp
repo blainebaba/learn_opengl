@@ -2,6 +2,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -104,10 +107,10 @@ int main() {
 
 		float vertices[] = {
 			// location  // color // texture coords
-			-1,1,0,		1,0,0,      0,1,
-			1,1,0,		0,1,0,      1,1,
-			-1,-1,0,	0,0,1,		0,0,
-			1,-1,0,		1,1,0,		1,0,
+			-0.5,0.5,0,		1,0,0,      0,1,
+			0.5,0.5,0,		0,1,0,      1,1,
+			-0.5,-0.5,0,	0,0,1,		0,0,
+			0.5,-0.5,0,		1,1,0,		1,0,
 		};
 		unsigned int elements[] = {
 			0, 2, 1,
@@ -145,6 +148,11 @@ int main() {
 
 		// end of this VAO
 		glBindVertexArray(NULL);
+
+		// create rotation matrix rotate by time
+		glm::mat4 transform = glm::mat4(1);
+		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0, 0, 1));
+		shader.setMat4("transform", glm::value_ptr(transform));
 
 		// draw
 		glBindVertexArray(VAO);
