@@ -214,8 +214,9 @@ int main() {
 
 	// init objects
 	Shader objShader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
-	objShader.loadTexture("container.jpg", "texture1");
-	objShader.loadTexture("awesomeface.png", "texture2");
+	objShader.loadTexture("resources/container2.png", "material.diffuseMap");
+	objShader.loadTexture("resources/container2_specular.png", "material.specularMap");
+	objShader.setFloat("material.shininess", 32);
 	unsigned int objVAO = initObjectVAO();
 	glm::mat4 modelMats[20];
 	for (int i = 0; i < 20; i++) {
@@ -225,9 +226,9 @@ int main() {
 
 	// init lights
 	Shader lightShader = Shader("shaders/light_vertex.glsl", "shaders/light_fragment.glsl");
-	glm::mat4 lightModelMatrix = glm::mat4(1);
 	glm::vec3 lightPos = glm::vec3(0, 5, -5);
 	unsigned int lightVAO = initLightVAO();
+	glm::mat4 lightModelMatrix = glm::mat4(1);
 	lightModelMatrix = glm::translate(lightModelMatrix, lightPos);
 	lightModelMatrix = glm::scale(lightModelMatrix, glm::vec3(0.2, 0.2, 0.2));
 
@@ -240,22 +241,27 @@ int main() {
 		glClearColor(0,0,0, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// rotate light by time
+		glm::mat4 lightRotateMatrix = glm::rotate(glm::mat4(1), (float)glfwGetTime(), glm::vec3(0, 1, 0));
+
 		// pass newest projection matrix
 		objShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
-		objShader.setVec3("lightPos", glm::value_ptr(lightPos));
+		glm::vec3 rotatedLightPos = lightRotateMatrix * glm::vec4(lightPos, 1);
+		objShader.setVec3("lightPos", glm::value_ptr(rotatedLightPos));
 		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
 		lightShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		lightShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 
-		// draw
+		// draw objects
 		glBindVertexArray(objVAO);
 		for (int i = 0; i < 20; i++) {
 			drawCube(modelMats[i], &objShader);
 		}
 
+		// draw light
 		glBindVertexArray(lightVAO);
-		drawCube(lightModelMatrix, &lightShader);
+		drawCube(lightRotateMatrix * lightModelMatrix, &lightShader);
 
 		// swap1
 		glfwSwapBuffers(window);
