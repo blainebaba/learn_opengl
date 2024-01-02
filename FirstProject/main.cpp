@@ -225,12 +225,12 @@ int main() {
 	}
 
 	// init lights
-	Shader lightShader = Shader("shaders/light_vertex.glsl", "shaders/light_fragment.glsl");
-	glm::vec3 lightPos = glm::vec3(0, 5, -5);
-	unsigned int lightVAO = initLightVAO();
-	glm::mat4 lightModelMatrix = glm::mat4(1);
-	lightModelMatrix = glm::translate(lightModelMatrix, lightPos);
-	lightModelMatrix = glm::scale(lightModelMatrix, glm::vec3(0.2, 0.2, 0.2));
+	// Shader lightShader = Shader("shaders/light_vertex.glsl", "shaders/light_fragment.glsl");
+	// glm::vec3 lightPos = glm::vec3(0, 5, -5);
+	// unsigned int lightVAO = initLightVAO();
+	// glm::mat4 lightModelMatrix = glm::mat4(1);
+	// lightModelMatrix = glm::translate(lightModelMatrix, lightPos);
+	// lightModelMatrix = glm::scale(lightModelMatrix, glm::vec3(0.2, 0.2, 0.2));
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -247,16 +247,20 @@ int main() {
 		// pass newest projection matrix
 		objShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
-		lightShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
-		lightShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
+		// lightShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
+		// lightShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 
 		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
-		glm::vec3 rotatedLightPos = lightRotateMatrix * glm::vec4(lightPos, 1);
-		objShader.setVec3("light.lightPos", glm::value_ptr(rotatedLightPos));
+		// glm::vec3 rotatedLightPos = lightRotateMatrix * glm::vec4(lightPos, 1);
+		objShader.setVec3("light.lightPos", glm::value_ptr(camera->getViewPos()));
+		objShader.setVec3("light.lightDir", glm::value_ptr(camera->getViewDir()));
+
 
 		objShader.setFloat("light.constant", 1);
 		objShader.setFloat("light.linear", 0.8);
 		objShader.setFloat("light.quadratic", 1.5);
+		objShader.setFloat("light.cutoff", cos(M_PI_2 * 0.25));
+		objShader.setFloat("light.cutoffStart", cos(M_PI_2 * 0.15));
 
 		// draw objects
 		glBindVertexArray(objVAO);
@@ -265,8 +269,8 @@ int main() {
 		}
 
 		// draw light
-		glBindVertexArray(lightVAO);
-		drawCube(lightRotateMatrix * lightModelMatrix, &lightShader);
+		// glBindVertexArray(lightVAO);
+		// drawCube(lightRotateMatrix * lightModelMatrix, &lightShader);
 
 		// swap1
 		glfwSwapBuffers(window);

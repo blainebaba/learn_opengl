@@ -58,6 +58,10 @@ public:
 		return cameraPos;
 	}
 
+	glm::vec3 getViewDir() {
+		return cameraDir;
+	}
+
 	void windowSizeChanged(int newWindowWidth, int newWindowHeight) {
 		aspectRatio = (float)newWindowWidth / (float)newWindowHeight;
 		projectMat = glm::perspective(fov, aspectRatio, 0.1f, 100.0f);
