@@ -13,10 +13,33 @@
 #include "shader.h"
 #include "camera.h"
 
+// define in object coordinate
+float vertices[] = {
+	// location // color   // texture coords	// normal
+	-1,1,0,		1,0,0,      0,1,				0,0,1,
+	1,1,0,		0,1,0,      1,1,				0,0,1,			
+	-1,-1,0,	0,0,1,		0,0,				0,0,1,
+	1,-1,0,		1,1,0,		1,0,				0,0,1,
+};
+
+float lightVertices[] = {
+	// location  
+	-1,1,0,		
+	1,1,0,		
+	-1,-1,0,	
+	1,-1,0,		
+};
+
+
+unsigned int elements[] = {
+	0, 2, 1,
+	1, 2, 3,
+};
+
+
 int deviceWidth = 1800;
 int deviceHeight = 1200;
 
-Shader* shader;
 Camera* camera;
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
@@ -39,7 +62,9 @@ void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
 
 // the basic plane
 void drawPlane(glm::mat4 modelMat, Shader* shader) {
+	shader->use();
 	shader->setMat4("modelMat", glm::value_ptr(modelMat));
+	glm::vec4 norm = modelMat * glm::vec4(0, 1, 0, 0);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }
 
@@ -78,6 +103,72 @@ void drawCube(glm::mat4 modelMat, Shader* shader) {
 	drawPlane(modelMat*planeMat, shader);
 }
 
+unsigned int initLightVAO() {
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO); // first arg: number of buffers to generate
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lightVertices), lightVertices, GL_STATIC_DRAW);
+
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+
+	// link vertex attributes
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	// end of this VAO
+	glBindVertexArray(NULL);
+
+	return VAO;
+}
+
+unsigned int initObjectVAO() {
+	// VAO: vertex array object, stores vertex config, including VBO
+	// later config on VBO and vertex attributes are stored in this VAO
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	// VBO: vertex buffer objects, stores vertex values in a buffer
+	unsigned int VBO;
+	glGenBuffers(1, &VBO); // first arg: number of buffers to generate
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// EBO: element buffer object, stores vertex indexes
+	unsigned int EBO;
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
+
+	// link vertex attributes
+	// position attribute
+	int stride = 11;
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	// color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	// texture coord attribute
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+	// normal attribute
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride * sizeof(float), (void*)(8 * sizeof(float)));
+	glEnableVertexAttribArray(3);
+
+	// end of this VAO
+	glBindVertexArray(NULL);
+
+	return VAO;
+}
+
 
 int main() {
 	glfwInit();
@@ -108,26 +199,37 @@ int main() {
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
 
-	// shader
-	shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+	srand((int)glfwGetTime());
+
+	/////////////////////
+	// end of boiler plate
+	/////////////////////
+
+	// opengl config
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 
 	// camera
 	camera = new Camera(glm::radians(45.0f), deviceWidth, deviceHeight);
 
-	// load texture
-	int texture1, texture2;
-	shader->loadTexture("container.jpg", "texture1");
-	shader->loadTexture("awesomeface.png", "texture2");
-
-	// opengl config
-	glEnable(GL_DEPTH_TEST);
-
-	// init model
+	// init objects
+	Shader objShader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+	objShader.loadTexture("container.jpg", "texture1");
+	objShader.loadTexture("awesomeface.png", "texture2");
+	unsigned int objVAO = initObjectVAO();
 	glm::mat4 modelMats[20];
 	for (int i = 0; i < 20; i++) {
 		glm::mat4 modelMat = glm::mat4(1);
-		modelMats[i] = glm::translate(modelMat, glm::vec3(-10 + rand() % 20, -10 + rand() % 20, -10 - rand() % 20));
+		modelMats[i] = glm::translate(modelMat, glm::vec3(-10 + rand() % 20, -10 + rand() % 20, -10 + rand() % 20));
 	}
+
+	// init lights
+	Shader lightShader = Shader("shaders/light_vertex.glsl", "shaders/light_fragment.glsl");
+	glm::mat4 lightModelMatrix = glm::mat4(1);
+	glm::vec3 lightPos = glm::vec3(0, 5, -5);
+	unsigned int lightVAO = initLightVAO();
+	lightModelMatrix = glm::translate(lightModelMatrix, lightPos);
+	lightModelMatrix = glm::scale(lightModelMatrix, glm::vec3(0.2, 0.2, 0.2));
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -135,64 +237,25 @@ int main() {
 		processInput(window);
 
 		// render commands
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0,0,0, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// define in object coordinate
-		float vertices[] = {
-			// location  // color // texture coords
-			-1,1,0,		1,0,0,      0,1,
-			1,1,0,		0,1,0,      1,1,
-			-1,-1,0,	0,0,1,		0,0,
-			1,-1,0,		1,1,0,		1,0,
-		};
-		unsigned int elements[] = {
-			0, 2, 1,
-			1, 2, 3,
-		};
-
-		// VAO: vertex array object, stores vertex config, including VBO
-		// later config on VBO and vertex attributes are stored in this VAO
-		unsigned int VAO;
-		glGenVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-
-		// VBO: vertex buffer objects, stores vertex values in a buffer
-		unsigned int VBO;
-		glGenBuffers(1, &VBO); // first arg: number of buffers to generate
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-		// EBO: element buffer object, stores vertex indexes
-		unsigned int EBO;
-		glGenBuffers(1, &EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
-
-		// link vertex attributes
-		// position attribute
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		// color attribute
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
-		glEnableVertexAttribArray(1);
-		// texture coord attribute
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6*sizeof(float)));
-		glEnableVertexAttribArray(2);
-
-		// end of this VAO
-		glBindVertexArray(NULL);
-
 		// pass newest projection matrix
-		shader->setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
-		shader->setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
+		objShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
+		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
+		objShader.setVec3("lightPos", glm::value_ptr(lightPos));
+		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
+		lightShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
+		lightShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 
 		// draw
-		glBindVertexArray(VAO);
-		shader->use();
+		glBindVertexArray(objVAO);
 		for (int i = 0; i < 20; i++) {
-			drawCube(modelMats[i], shader);
+			drawCube(modelMats[i], &objShader);
 		}
+
+		glBindVertexArray(lightVAO);
+		drawCube(lightModelMatrix, &lightShader);
 
 		// swap1
 		glfwSwapBuffers(window);

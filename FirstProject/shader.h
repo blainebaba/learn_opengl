@@ -24,6 +24,7 @@ public:
 	void setInt(const std::string& name, int value);
 	void setFloat(const std::string& name, float value);
 	void setMat4(const std::string& name, const float* value);
+	void setVec3(const std::string& name, const float* values);
 	int loadTexture(const char* imgPath, const std::string& texNameInShader);
 };
 
@@ -120,6 +121,12 @@ void Shader::setMat4(const std::string& name, const float* values) {
 	int location = glGetUniformLocation(ID, name.c_str());
 	glUseProgram(ID);
 	glUniformMatrix4fv(location, 1, GL_FALSE, values);
+}
+
+void Shader::setVec3(const std::string& name, const float* values) {
+	int location = glGetUniformLocation(ID, name.c_str());
+	glUseProgram(ID);
+	glUniform3fv(location, 1, values);
 }
 
 
