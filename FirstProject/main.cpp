@@ -5,56 +5,79 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "shader.h"
+#include "camera.h"
+
+int deviceWidth = 1800;
+int deviceHeight = 1200;
+
+Shader* shader;
+Camera* camera;
 
 void framebuffer_size_callback(GLFWwindow* window, int w, int h) {
+	deviceWidth = w;
+	deviceHeight = h;
 	glViewport(0, 0, w, h);
+	camera->windowSizeChanged(w, h);
 }
 
 void processInput(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
+	camera->keyboardCallBack(window);
 }
 
-int textureUnit = 0;
-
-int loadTexture(const char* imagePath, Shader* shader, int& textureId) {
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	// bind object, set target for following operation
-	glBindTexture(GL_TEXTURE_2D, texture);
-
-	int width, height, nChannel;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(imagePath, &width, &height, &nChannel, 0);
-
-	if (data) {
-		if (nChannel == 4) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		}
-		else if (nChannel == 3) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		}
-		else {
-			std::cout << "unknown image format" << std::endl;
-			return -1;
-		}
-		glGenerateMipmap(GL_TEXTURE_2D);
-		stbi_image_free(data);
-	}
-	else {
-		std::cout << "fail to load image" << std::endl;
-		return -1;
-	}
-
-	textureId = texture;
-
-	return 0;
+void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+	camera->mouseCallBack(window, xpos, ypos);
 }
+
+// the basic plane
+void drawPlane(glm::mat4 modelMat, Shader* shader) {
+	shader->setMat4("modelMat", glm::value_ptr(modelMat));
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}
+
+void drawCube(glm::mat4 modelMat, Shader* shader) {
+	// plane is on XY plane, center at origin, let's create a cube that center at origin
+
+	glm::mat4 planeMat;
+	// front face
+	planeMat = glm::mat4(1);
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+	// back face
+	planeMat = glm::mat4(1);
+	planeMat = glm::rotate(planeMat, glm::radians(180.0f), glm::vec3(1, 0, 0));
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+	// up face
+	planeMat = glm::mat4(1);
+	planeMat = glm::rotate(planeMat, glm::radians(-90.0f), glm::vec3(1, 0, 0));
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+	//// donw face
+	planeMat = glm::mat4(1);
+	planeMat = glm::rotate(planeMat, glm::radians(90.0f), glm::vec3(1, 0, 0));
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+	//// left face
+	planeMat = glm::mat4(1);
+	planeMat = glm::rotate(planeMat, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+	//// right face
+	planeMat = glm::mat4(1);
+	planeMat = glm::rotate(planeMat, glm::radians(90.0f), glm::vec3(0, 1, 0));
+	planeMat = glm::translate(planeMat, glm::vec3(0, 0, 1));
+	drawPlane(modelMat*planeMat, shader);
+}
+
 
 int main() {
 	glfwInit();
@@ -63,7 +86,7 @@ int main() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// create window
-	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(deviceWidth, deviceHeight, "LearnOpenGL", NULL, NULL);
 	if (window == NULL) {
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
@@ -79,22 +102,32 @@ int main() {
 	}
 
 	// setup opengl viewport
-	glViewport(0, 0, 800, 600);
+	glViewport(0, 0, deviceWidth, deviceHeight);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouseCallback);
 
 	// shader
-	Shader shader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+	shader = new Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
+
+	// camera
+	camera = new Camera(glm::radians(45.0f), deviceWidth, deviceHeight);
 
 	// load texture
 	int texture1, texture2;
-	loadTexture("container.jpg", &shader, texture1);
-	loadTexture("awesomeface.png", &shader, texture2);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture1);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture2);
-	shader.setInt("texture1", 0);
-	shader.setInt("texture2", 1);
+	shader->loadTexture("container.jpg", "texture1");
+	shader->loadTexture("awesomeface.png", "texture2");
+
+	// opengl config
+	glEnable(GL_DEPTH_TEST);
+
+	// init model
+	glm::mat4 modelMats[20];
+	for (int i = 0; i < 20; i++) {
+		glm::mat4 modelMat = glm::mat4(1);
+		modelMats[i] = glm::translate(modelMat, glm::vec3(-10 + rand() % 20, -10 + rand() % 20, -10 - rand() % 20));
+	}
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -103,14 +136,15 @@ int main() {
 
 		// render commands
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// define in object coordinate
 		float vertices[] = {
 			// location  // color // texture coords
-			-0.5,0.5,0,		1,0,0,      0,1,
-			0.5,0.5,0,		0,1,0,      1,1,
-			-0.5,-0.5,0,	0,0,1,		0,0,
-			0.5,-0.5,0,		1,1,0,		1,0,
+			-1,1,0,		1,0,0,      0,1,
+			1,1,0,		0,1,0,      1,1,
+			-1,-1,0,	0,0,1,		0,0,
+			1,-1,0,		1,1,0,		1,0,
 		};
 		unsigned int elements[] = {
 			0, 2, 1,
@@ -149,15 +183,16 @@ int main() {
 		// end of this VAO
 		glBindVertexArray(NULL);
 
-		// create rotation matrix rotate by time
-		glm::mat4 transform = glm::mat4(1);
-		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0, 0, 1));
-		shader.setMat4("transform", glm::value_ptr(transform));
+		// pass newest projection matrix
+		shader->setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
+		shader->setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 
 		// draw
 		glBindVertexArray(VAO);
-		shader.use();
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		shader->use();
+		for (int i = 0; i < 20; i++) {
+			drawCube(modelMats[i], shader);
+		}
 
 		// swap1
 		glfwSwapBuffers(window);

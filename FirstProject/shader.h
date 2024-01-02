@@ -9,6 +9,8 @@
 
 // wrapper of a shader program
 class Shader {
+private:
+	int textureUnit = 0;
 public:
 	unsigned int ID;
 
@@ -21,7 +23,8 @@ public:
 	void setBool(const std::string &name, bool value);
 	void setInt(const std::string& name, int value);
 	void setFloat(const std::string& name, float value);
-	void setMat4(const std::string& name, float* value);
+	void setMat4(const std::string& name, const float* value);
+	int loadTexture(const char* imgPath, const std::string& texNameInShader);
 };
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
@@ -113,9 +116,48 @@ void Shader::setFloat(const std::string& name, float value) {
 	glUniform1f(location, value);
 }
 
-void Shader::setMat4(const std::string& name, float* values) {
+void Shader::setMat4(const std::string& name, const float* values) {
 	int location = glGetUniformLocation(ID, name.c_str());
 	glUseProgram(ID);
 	glUniformMatrix4fv(location, 1, GL_FALSE, values);
+}
+
+
+int Shader::loadTexture(const char* imgPath, const std::string& texNameInShader) {
+	glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	// bind object, set target for following operation
+	glBindTexture(GL_TEXTURE_2D, texture);
+
+	int width, height, nChannel;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(imgPath, &width, &height, &nChannel, 0);
+
+	if (data) {
+		if (nChannel == 4) {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		}
+		else if (nChannel == 3) {
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		}
+		else {
+			std::cout << "unknown image format" << std::endl;
+			return -1;
+		}
+		glGenerateMipmap(GL_TEXTURE_2D);
+		stbi_image_free(data);
+	}
+	else {
+		std::cout << "fail to load image" << std::endl;
+		return -1;
+	}
+
+	// not thread safe
+	setInt(texNameInShader, textureUnit);
+	textureUnit++;
+
+	return 0;
 }
 
