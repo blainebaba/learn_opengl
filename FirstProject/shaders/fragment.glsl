@@ -1,10 +1,4 @@
 #version 330 core
-out vec4 FragColor;
-
-in vec3 ourColor;
-in vec2 texCoord;
-in vec3 normal;
-in vec3 modelPos;
 
 struct Material {
     sampler2D diffuseMap;
@@ -12,21 +6,38 @@ struct Material {
     float shininess;
 };
 
+struct SpotLight {
+    vec3 lightPos;
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+out vec4 FragColor;
+
+in vec3 ourColor;
+in vec2 texCoord;
+in vec3 normal;
+in vec3 modelPos;
+
 uniform Material material;
-uniform vec3 lightPos;
+uniform SpotLight light;
 uniform vec3 viewPos;
 
 void main()
 {
-    // vec4 textureColor = mix(texture(texture1, texCoord), texture(texture2, texCoord), 0.2);
 
-    vec3 lightVec = normalize(lightPos - modelPos);
+    vec3 lightVec = normalize(light.lightPos - modelPos);
     vec3 viewVec = normalize(viewPos - modelPos);
     vec3 reflectVec = reflect(-lightVec, normal);
 
-    float diffuseLight = max(dot(lightVec,normal),0);
-    float specularLight = pow(max(dot(reflectVec,viewVec),0), material.shininess);
+    float diffuseAngleAttenuation = max(dot(lightVec,normal),0);
+    float specularAngleAttenuation = pow(max(dot(reflectVec,viewVec),0), material.shininess);
 
-    FragColor = texture(material.diffuseMap, texCoord) * diffuseLight
-                + texture(material.specularMap, texCoord) * specularLight;
+    float dist = length(lightVec);
+    float distanceAttenuation = 1.0 / (light.constant + light.linear * dist + light.quadratic * dist * dist);
+
+    FragColor = texture(material.diffuseMap, texCoord) * (diffuseAngleAttenuation * distanceAttenuation * 2 + 0.03)
+                + texture(material.specularMap, texCoord) * specularAngleAttenuation * distanceAttenuation * 4;
 }

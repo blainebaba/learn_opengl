@@ -247,11 +247,16 @@ int main() {
 		// pass newest projection matrix
 		objShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
-		glm::vec3 rotatedLightPos = lightRotateMatrix * glm::vec4(lightPos, 1);
-		objShader.setVec3("lightPos", glm::value_ptr(rotatedLightPos));
-		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
 		lightShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		lightShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
+
+		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
+		glm::vec3 rotatedLightPos = lightRotateMatrix * glm::vec4(lightPos, 1);
+		objShader.setVec3("light.lightPos", glm::value_ptr(rotatedLightPos));
+
+		objShader.setFloat("light.constant", 1);
+		objShader.setFloat("light.linear", 0.8);
+		objShader.setFloat("light.quadratic", 1.5);
 
 		// draw objects
 		glBindVertexArray(objVAO);
