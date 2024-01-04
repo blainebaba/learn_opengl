@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "shader.h"
 #include "mesh.h"
@@ -32,6 +33,7 @@ public:
 private:
 	vector<Mesh> meshes;
 	string directory;
+	map<string, unsigned int> loadedTextures;
 	void loadModel(string path);
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
@@ -83,6 +85,7 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene) {
 			vertex.TexCoord.x = mesh->mTextureCoords[0][i].x;
 			vertex.TexCoord.y = mesh->mTextureCoords[0][i].y;
 		}
+		vertices.push_back(vertex);
 	}
 
 	// indices
@@ -110,8 +113,15 @@ vector<Texture> Model::loadMaterials(aiMaterial* mat, aiTextureType type, string
 	for (int i = 0; i < mat->GetTextureCount(type); i++) {
 		aiString str;
 		mat->GetTexture(type, i, &str);
+		string name = string(str.C_Str());
 		Texture texture;
-		texture.id = readTextureFromFile(str.C_Str(), directory);
+		if (loadedTextures.find(name) != loadedTextures.end()) {
+			texture.id = loadedTextures[name];
+		}
+		else {
+			texture.id = readTextureFromFile(name.c_str(), directory);
+			loadedTextures[name] = texture.id;
+		}
 		texture.type = typeName;
 		// texture.path = str;
 		textures.push_back(texture);
@@ -133,16 +143,22 @@ unsigned int Model::readTextureFromFile(const char* path, string directory) {
 	unsigned char* data = stbi_load(fileName.c_str(), &width, &height, &nChannel, 0);
 
 	if (data) {
-		if (nChannel == 4) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		GLenum format;
+		if (nChannel == 1) {
+			format = GL_RED;
 		}
 		else if (nChannel == 3) {
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+			format = GL_RGB;
+		}
+		else if (nChannel == 4) {
+			format = GL_RGBA;
 		}
 		else {
 			std::cout << "unknown image format" << std::endl;
 			return -1;
 		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 		stbi_image_free(data);
 	}
