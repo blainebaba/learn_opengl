@@ -13,6 +13,8 @@
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "framebuffer.h"
+#include "Quad.h"
 
 int deviceWidth = 1800;
 int deviceHeight = 1200;
@@ -42,6 +44,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
 	// create window
 	GLFWwindow* window = glfwCreateWindow(deviceWidth, deviceHeight, "LearnOpenGL", NULL, NULL);
@@ -82,11 +85,27 @@ int main() {
 	// init objects
 	Shader objShader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 	Model model = Model("resources/models/backpack/backpack.obj");
+	glm::vec4 lightPos = glm::vec4(0, 0, 20, 1);
+
+	// prepare framebuffer
+	FrameBuffer framebuffer = FrameBuffer(deviceWidth, deviceHeight);
+	Shader quadShader = Shader("shaders/quad_vertex.glsl","shaders/quad_fragment.glsl");
+	Quad quad = Quad();
+
 
 	// render loop
+	float previousTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
+		float curTime = glfwGetTime();
+		float deltaTime = curTime - previousTime;
+		previousTime = curTime;
+
 		// input
 		processInput(window);
+
+		// render to frame buffer
+		framebuffer.use();
+		glEnable(GL_DEPTH_TEST);
 
 		// render commands
 		glClearColor(0.2,0.2,0, 1.0f);
@@ -96,9 +115,18 @@ int main() {
 		objShader.setMat4("projectMat", glm::value_ptr(camera->getProjectMat()));
 		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
+		glm::mat4 lightRotateMat = glm::rotate(glm::mat4(1), glm::radians(90.0f * curTime), glm::vec3(0, 1, 0));
+		objShader.setVec3("lightPos", glm::value_ptr(glm::vec3(lightRotateMat * lightPos)));
 
 		// draw objects
 		model.draw(objShader);
+
+		// draw quad
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(1, 1, 1, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+		quad.draw(quadShader, framebuffer.getTexture());
 		
 		// swap1
 		glfwSwapBuffers(window);

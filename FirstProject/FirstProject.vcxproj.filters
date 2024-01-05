@@ -38,11 +38,17 @@
     <ClInclude Include="model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="framebuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Quad.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\vertex.glsl" />
     <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\light_fragment.glsl" />
-    <None Include="shaders\light_vertex.glsl" />
+    <None Include="shaders\quad_fragment.glsl" />
+    <None Include="shaders\quad_vertex.glsl" />
   </ItemGroup>
 </Project>

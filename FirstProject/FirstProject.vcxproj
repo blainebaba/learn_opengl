@@ -24,15 +24,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
+    <ClInclude Include="framebuffer.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\light_fragment.glsl" />
-    <None Include="shaders\light_vertex.glsl" />
+    <None Include="shaders\quad_fragment.glsl" />
+    <None Include="shaders\quad_vertex.glsl" />
     <None Include="shaders\vertex.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
