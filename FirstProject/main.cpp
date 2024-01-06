@@ -46,6 +46,7 @@ int main() {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	// create window
 	GLFWwindow* window = glfwCreateWindow(deviceWidth, deviceHeight, "LearnOpenGL", NULL, NULL);
@@ -79,6 +80,7 @@ int main() {
 	// opengl config
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_MULTISAMPLE);
 
 	// camera
 	camera = new Camera(glm::radians(45.0f), deviceWidth, deviceHeight);
@@ -93,6 +95,7 @@ int main() {
 		paths[i] = directory + '/' + paths[i];
 	}
 	Skybox skybox = Skybox(paths);
+
 
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -109,8 +112,9 @@ int main() {
 		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
 
 		// draw
+		// glDisable(GL_MULTISAMPLE);
 		model.draw(objShader);
-		skybox.draw(camera->getProjectMat(), camera->getViewMat());
+		// skybox.draw(camera->getProjectMat(), camera->getViewMat());
 		
 		// swap1
 		glfwSwapBuffers(window);
