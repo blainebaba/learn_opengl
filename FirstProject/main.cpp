@@ -10,9 +10,13 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#undef STB_IMAGE_IMPLEMENTATION
 #include "shader.h"
 #include "camera.h"
 #include "model.h"
+#include "skybox.h"
+
+using namespace std;
 
 int deviceWidth = 1800;
 int deviceHeight = 1200;
@@ -83,6 +87,13 @@ int main() {
 	Shader objShader = Shader("shaders/vertex.glsl", "shaders/fragment.glsl");
 	Model model = Model("resources/models/backpack/backpack.obj");
 
+	string directory = "resources/skybox";
+	vector<string> paths = {"right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+	for (int i = 0; i < paths.size(); i++) {
+		paths[i] = directory + '/' + paths[i];
+	}
+	Skybox skybox = Skybox(paths);
+
 	// render loop
 	while (!glfwWindowShouldClose(window)) {
 		// input
@@ -97,8 +108,9 @@ int main() {
 		objShader.setMat4("viewMat", glm::value_ptr(camera->getViewMat()));
 		objShader.setVec3("viewPos", glm::value_ptr(camera->getViewPos()));
 
-		// draw objects
+		// draw
 		model.draw(objShader);
+		skybox.draw(camera->getProjectMat(), camera->getViewMat());
 		
 		// swap1
 		glfwSwapBuffers(window);

@@ -27,13 +27,22 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="skybox.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\light_fragment.glsl" />
-    <None Include="shaders\light_vertex.glsl" />
+    <None Include="shaders\skybox_fragment.glsl" />
+    <None Include="shaders\skybox_vertex.glsl" />
     <None Include="shaders\vertex.glsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\skybox\back.jpg" />
+    <Image Include="resources\skybox\bottom.jpg" />
+    <Image Include="resources\skybox\front.jpg" />
+    <Image Include="resources\skybox\left.jpg" />
+    <Image Include="resources\skybox\right.jpg" />
+    <Image Include="resources\skybox\top.jpg" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
