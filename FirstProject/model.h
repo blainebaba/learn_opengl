@@ -135,7 +135,6 @@ unsigned int Model::readTextureFromFile(const char* path, string directory) {
 
 	unsigned int texture;
 	glGenTextures(1, &texture);
-	cout << texture << endl;
 	// bind object, set target for following operation
 	glBindTexture(GL_TEXTURE_2D, texture);
 

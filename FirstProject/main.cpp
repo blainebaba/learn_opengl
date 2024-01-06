@@ -77,7 +77,6 @@ int main() {
 
 	// opengl config
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
 
 	// camera
 	camera = new Camera(glm::radians(45.0f), deviceWidth, deviceHeight);
@@ -91,7 +90,6 @@ int main() {
 	FrameBuffer framebuffer = FrameBuffer(deviceWidth, deviceHeight);
 	Shader quadShader = Shader("shaders/quad_vertex.glsl","shaders/quad_fragment.glsl");
 	Quad quad = Quad();
-
 
 	// render loop
 	float previousTime = glfwGetTime();
