@@ -23,18 +23,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
-    <ClInclude Include="mesh.h" />
-    <ClInclude Include="model.h" />
-    <ClInclude Include="shader.h" />
-    <ClInclude Include="skybox.h" />
     <ClInclude Include="stb_image.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="shaders\fragment.glsl" />
-    <None Include="shaders\skybox_fragment.glsl" />
-    <None Include="shaders\skybox_vertex.glsl" />
-    <None Include="shaders\vertex.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\skybox\back.jpg" />
