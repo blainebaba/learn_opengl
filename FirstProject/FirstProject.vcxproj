@@ -23,6 +23,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cube.h" />
+    <ClInclude Include="quad.h" />
+    <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
@@ -32,6 +35,12 @@
     <Image Include="resources\skybox\left.jpg" />
     <Image Include="resources\skybox\right.jpg" />
     <Image Include="resources\skybox\top.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\fs.glsl" />
+    <None Include="shaders\q_fs.glsl" />
+    <None Include="shaders\q_vs.glsl" />
+    <None Include="shaders\vs.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -88,10 +97,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>D:\code\lib\includes;$(IncludePath)</IncludePath>
     <LibraryPath>D:\code\lib\libs;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)FirstProject</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>D:\code\lib\includes;$(IncludePath)</IncludePath>
     <LibraryPath>D:\code\lib\libs;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)FirstProject</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
