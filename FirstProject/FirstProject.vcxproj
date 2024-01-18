@@ -23,7 +23,9 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="cube.h" />
+    <ClInclude Include="plain.h" />
     <ClInclude Include="quad.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
@@ -40,6 +42,8 @@
     <None Include="shaders\fs.glsl" />
     <None Include="shaders\q_fs.glsl" />
     <None Include="shaders\q_vs.glsl" />
+    <None Include="shaders\s_fs.glsl" />
+    <None Include="shaders\s_vs.glsl" />
     <None Include="shaders\vs.glsl" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

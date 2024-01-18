@@ -7,17 +7,14 @@ layout (location = 2) in vec2 aTexCoord;
 uniform mat4 modelMat;
 uniform mat4 projectMat;
 uniform mat4 viewMat;
-uniform mat4 shadowViewMat;
-uniform mat4 shadowProjectMat;
 
-out vec4 shadowPos;
 out vec3 norm;
 out vec2 texCoord;
+out vec4 projPos;
 
 void main() {
-	vec4 modelPos = modelMat * vec4(aPos,1);
-	gl_Position = projectMat * viewMat * modelPos;
-	shadowPos = shadowProjectMat * shadowViewMat * modelPos;
+	projPos = projectMat * viewMat * modelMat * vec4(aPos, 1);
+	gl_Position = projPos;
 	norm = aNorm;
 	texCoord = aTexCoord;
 }

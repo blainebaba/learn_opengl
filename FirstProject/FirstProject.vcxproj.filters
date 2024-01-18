@@ -35,12 +35,20 @@
     <ClInclude Include="quad.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="plain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\fs.glsl" />
     <None Include="shaders\vs.glsl" />
     <None Include="shaders\q_fs.glsl" />
     <None Include="shaders\q_vs.glsl" />
+    <None Include="shaders\s_fs.glsl" />
+    <None Include="shaders\s_vs.glsl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\skybox\back.jpg">
